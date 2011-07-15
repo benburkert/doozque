@@ -16,6 +16,10 @@ module Resque
       Resque.redis
     end
 
+    def fraggle
+      Resque.fraggle
+    end
+
     # Given a Ruby object, returns a string suitable for storage in a
     # queue.
     def encode(object)

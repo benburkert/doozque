@@ -1,4 +1,4 @@
-require 'redis/namespace'
+require 'fraggle/block'
 
 require 'resque/version'
 
@@ -51,6 +51,10 @@ module Resque
     return @redis if @redis
     self.redis = Redis.respond_to?(:connect) ? Redis.connect : "localhost:6379"
     self.redis
+  end
+
+  def fraggle
+    @fraggle ||= Fraggle::Block.connect
   end
 
   def redis_id
@@ -147,15 +151,38 @@ module Resque
   #
   # Returns nothing
   def push(queue, item)
-    watch_queue(queue)
-    redis.rpush "queue:#{queue}", encode(item)
+    fraggle.set("/queue/#{queue}/#{$$}.#{Time.now.to_f}/job", encode(item))
   end
 
   # Pops a job off a queue. Queue name should be a string.
   #
   # Returns a Ruby object.
   def pop(queue)
-    decode redis.lpop("queue:#{queue}")
+    pop_existing(queue) || pop_incoming(queue)
+  end
+
+  def pop_existing(queue, offset = 0)
+    response = fraggle.walk("/queue/#{queue}/*/job", offset)
+
+    return if response.nil?
+
+    race_for(response, queue) || pop_existing(queue, offset + 1)
+  end
+
+  def pop_incoming(queue)
+    response = fraggle.wait("/queue/#{queue}/*/job")
+
+    race_for(response, queue)
+  end
+
+  def self.race_for(response, queue)
+    lock_path = response.path.sub(%r{/job$}, '/lock')
+    lock_response = fraggle.get(lock_path)
+
+    # lock doesn't exist, so race for it. If set returns nil, we lost.
+    if lock_response.value.empty? && fraggle.set(lock_path, Time.now.to_s, lock_response.rev)
+      response.value
+    end
   end
 
   # Returns an integer representing the size of a queue.

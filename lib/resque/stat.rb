@@ -11,7 +11,8 @@ module Resque
 
     # Returns the int value of a stat, given a string stat name.
     def get(stat)
-      redis.get("stat:#{stat}").to_i
+      value = fraggle.get("/stat/#{stat}").value
+      value.empty? ? 0 : value.to_i
     end
 
     # Alias of `get`
@@ -24,7 +25,12 @@ module Resque
     # Can optionally accept a second int parameter. The stat is then
     # incremented by that amount.
     def incr(stat, by = 1)
-      redis.incrby("stat:#{stat}", by)
+      response = fraggle.get("/stat/#{stat}")
+      if response.value.empty? && response.rev == 0
+        fraggle.set("/stats/#{stat}", by.to_s)
+      else
+        retry unless fraggle.set("/stats/#{stat}", (response.value.to_i + by).to_s, response.rev)
+      end
     end
 
     # Increments a stat by one.
@@ -37,7 +43,9 @@ module Resque
     # Can optionally accept a second int parameter. The stat is then
     # decremented by that amount.
     def decr(stat, by = 1)
-      redis.decrby("stat:#{stat}", by)
+      response = fraggle.get("/stat/#{stat}")
+      value = (response.nil? || response.value.empty?) ? 0 : value.to_i
+      retry unless fraggle.set("/stats/#{stat}", value - by, response.rev)
     end
 
     # Decrements a stat by one.
@@ -47,7 +55,7 @@ module Resque
 
     # Removes a stat from Redis, effectively setting it to 0.
     def clear(stat)
-      redis.del("stat:#{stat}")
+      fraggle.del("/stat/#{stat}")
     end
   end
 end

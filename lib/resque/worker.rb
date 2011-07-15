@@ -23,23 +23,27 @@ module Resque
     attr_writer :to_s
 
     # Returns an array of all worker objects.
-    def self.all
-      Array(redis.smembers(:workers)).map { |id| find(id) }.compact
+    def self.all(response = self.workers_response)
+      response.value.empty? ? [] : Array(decode(response.value)).map { |id| find(id) }.compact
+    end
+
+    def self.workers_response
+      fraggle.get('/workers')
+    end
+
+    def self.delete_worker(worker)
+      response = workers_response
+      raw_workers = response.value.empty? ? [] : decode(response.value)
+      workers = raw_workers.reject {|w| w == worker.to_s }
+
+      fraggle.set('/workers', encode(workers), response.rev)
     end
 
     # Returns an array of all worker objects currently processing
     # jobs.
     def self.working
-      names = all
-      return [] unless names.any?
-
-      names.map! { |name| "worker:#{name}" }
-
-      reportedly_working = redis.mapped_mget(*names).reject do |key, value|
-        value.nil? || value.empty?
-      end
-      reportedly_working.keys.map do |key|
-        find key.sub("worker:", '')
+      fraggle.walk_all("/worker/*/status").map do |response|
+        find response.path[%r{^worker/(.*)/status$}, 1]
       end.compact
     end
 
@@ -63,7 +67,7 @@ module Resque
     # Given a string worker id, return a boolean indicating whether the
     # worker exists
     def self.exists?(worker_id)
-      redis.sismember(:workers, worker_id)
+      workers_response.value.include?(worker_id)
     end
 
     # Workers should be initialized with an array of string queue
@@ -131,7 +135,7 @@ module Resque
             exit! unless @cant_fork
           end
 
-          done_working
+          done_working(job)
           @child = nil
         else
           break if interval.zero?
@@ -153,7 +157,7 @@ module Resque
       working_on job
       perform(job, &block)
     ensure
-      done_working
+      done_working(job)
     end
 
     # Processes a given job in the child.
@@ -197,9 +201,7 @@ module Resque
     # Returns a list of queues to use when searching for a job.
     # A splat ("*") means you want every queue (in alpha order) - this
     # can be useful for dynamically adding new queues.
-    def queues
-      @queues[0] == "*" ? Resque.queues.sort : @queues
-    end
+    attr_accessor :queues
 
     # Not every platform supports fork. Here we do our magic to
     # determine if yours does.
@@ -341,7 +343,11 @@ module Resque
     # Registers ourself as a worker. Useful when entering the worker
     # lifecycle on startup.
     def register_worker
-      redis.sadd(:workers, self)
+      tick, workers = fraggle.rev.rev, self.class.all
+      workers << self
+
+      response = fraggle.set('/workers', encode(workers), tick)
+
       started!
     end
 
@@ -367,9 +373,8 @@ module Resque
         job.fail(DirtyExit.new)
       end
 
-      redis.srem(:workers, self)
-      redis.del("worker:#{self}")
-      redis.del("worker:#{self}:started")
+      self.class.delete_worker(self)
+      fraggle.del("/worker/#{self}")
 
       Stat.clear("processed:#{self}")
       Stat.clear("failed:#{self}")
@@ -383,14 +388,14 @@ module Resque
         :queue   => job.queue,
         :run_at  => Time.now.to_s,
         :payload => job.payload
-      redis.set("worker:#{self}", data)
+      fraggle.set("/worker/#{self}/job", data)
     end
 
     # Called when we are done working - clears our `working_on` state
     # and tells Redis we processed a job.
     def done_working
       processed!
-      redis.del("worker:#{self}")
+      fraggle.del("/worker/#{self}")
     end
 
     # How many jobs has this worker processed? Returns an int.
@@ -417,17 +422,18 @@ module Resque
 
     # What time did this worker start? Returns an instance of `Time`
     def started
-      redis.get "worker:#{self}:started"
+      fraggle.get("/worker/#{self}/started")
     end
 
     # Tell Redis we've started
     def started!
-      redis.set("worker:#{self}:started", Time.now.to_s)
+      fraggle.set("/worker/#{self}/started", Time.now.to_s)
     end
 
     # Returns a hash explaining the Job we're currently processing, if any.
     def job
-      decode(redis.get("worker:#{self}")) || {}
+      value = fraggle.get("/worker/#{self}/job").value
+      value.empty? ? {} : decode(value)
     end
     alias_method :processing, :job
 
@@ -444,7 +450,7 @@ module Resque
     # Returns a symbol representing the current worker state,
     # which can be either :working or :idle
     def state
-      redis.exists("worker:#{self}") ? :working : :idle
+      fraggle.getdir("/worker/#{self}").nil? ? :idle : :working
     end
 
     # Is this worker the same as another worker?
