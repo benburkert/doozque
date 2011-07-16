@@ -9,7 +9,7 @@ Why?
 
 Resque is awesome and so is Redis. But Redis is not distributed\*. If your
 redis server goes down, then so does your ability to process jobs.
-Doozer is a distributed and can be setup in a fault tolerent way. You
+Doozer is distributed and can be setup in a fault tolerent way. You
 can loose doozerd instances and still process background jobs.
 
 Demo
@@ -25,4 +25,4 @@ like. \*NOTE\* you must run this fork of fraggle-block
     % bundle exec rake doozque:worker QUEUE=*
 
 Browse to `http://127.0.0.1:9292` and run some jobs. Also check out
-`http://127.0.0.1:8000` to check out what's happening in your doozer db.
+`http://127.0.0.1:8000` to see what's happening in your doozer db.
