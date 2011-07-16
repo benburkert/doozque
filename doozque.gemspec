@@ -1,12 +1,12 @@
 $LOAD_PATH.unshift 'lib'
-require 'resque/version'
+require 'doozque/version'
 
 Gem::Specification.new do |s|
-  s.name              = "resque"
-  s.version           = Resque::Version
+  s.name              = "doozque"
+  s.version           = Doozque::Version
   s.date              = Time.now.strftime('%Y-%m-%d')
-  s.summary           = "Resque is a Redis-backed queueing system."
-  s.homepage          = "http://github.com/defunkt/resque"
+  s.summary           = "Doozque is a Redis-backed queueing system."
+  s.homepage          = "http://github.com/defunkt/doozque"
   s.email             = "chris@ozmm.org"
   s.authors           = [ "Chris Wanstrath" ]
 
@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.files            += Dir.glob("man/**/*")
   s.files            += Dir.glob("test/**/*")
   s.files            += Dir.glob("tasks/**/*")
-  s.executables       = [ "resque", "resque-web" ]
+  s.executables       = [ "doozque", "doozque-web" ]
 
   s.extra_rdoc_files  = [ "LICENSE", "README.markdown" ]
   s.rdoc_options      = ["--charset=UTF-8"]
@@ -27,7 +27,7 @@ Gem::Specification.new do |s|
   s.add_dependency "fraggle-block",   "~> 0.1"
 
   s.description = <<description
-    Resque is a Redis-backed Ruby library for creating background jobs,
+    Doozque is a Redis-backed Ruby library for creating background jobs,
     placing those jobs on multiple queues, and processing them later.
 
     Background jobs can be any Ruby class or module that responds to
@@ -35,7 +35,7 @@ Gem::Specification.new do |s|
     jobs or you can create new classes specifically to do work. Or, you
     can do both.
 
-    Resque is heavily inspired by DelayedJob (which rocks) and is
+    Doozque is heavily inspired by DelayedJob (which rocks) and is
     comprised of three parts:
 
     * A Ruby library for creating, querying, and processing jobs

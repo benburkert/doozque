@@ -1,12 +1,12 @@
 require 'rack/test'
-require 'resque/server'
+require 'doozque/server'
 
-module Resque
+module Doozque
   module TestHelper
     class Test::Unit::TestCase
       include Rack::Test::Methods
       def app
-        Resque::Server.new
+        Doozque::Server.new
       end 
 
       def self.should_respond_with_success

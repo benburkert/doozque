@@ -2,18 +2,18 @@
 require 'logger'
 $LOAD_PATH.unshift File.dirname(__FILE__) + '/../../lib'
 require 'app'
-require 'resque/server'
+require 'doozque/server'
 
 use Rack::ShowExceptions
 
-# Set the AUTH env variable to your basic auth password to protect Resque.
+# Set the AUTH env variable to your basic auth password to protect Doozque.
 AUTH_PASSWORD = ENV['AUTH']
 if AUTH_PASSWORD
-  Resque::Server.use Rack::Auth::Basic do |username, password|
+  Doozque::Server.use Rack::Auth::Basic do |username, password|
     password == AUTH_PASSWORD
   end
 end
 
 run Rack::URLMap.new \
   "/"       => Demo::App.new,
-  "/resque" => Resque::Server.new
+  "/doozque" => Doozque::Server.new

@@ -1,10 +1,10 @@
 require 'sinatra/base'
 require 'erb'
-require 'resque'
-require 'resque/version'
+require 'doozque'
+require 'doozque/version'
 require 'time'
 
-module Resque
+module Doozque
   class Server < Sinatra::Base
     dir = File.dirname(File.expand_path(__FILE__))
 
@@ -44,36 +44,36 @@ module Resque
       end
 
       def tabs
-        Resque::Server.tabs
+        Doozque::Server.tabs
       end
 
       def redis_get_size(key)
-        case Resque.redis.type(key)
+        case Doozque.redis.type(key)
         when 'none'
           []
         when 'list'
-          Resque.redis.llen(key)
+          Doozque.redis.llen(key)
         when 'set'
-          Resque.redis.scard(key)
+          Doozque.redis.scard(key)
         when 'string'
-          Resque.redis.get(key).length
+          Doozque.redis.get(key).length
         when 'zset'
-          Resque.redis.zcard(key)
+          Doozque.redis.zcard(key)
         end
       end
 
       def redis_get_value_as_array(key, start=0)
-        case Resque.redis.type(key)
+        case Doozque.redis.type(key)
         when 'none'
           []
         when 'list'
-          Resque.redis.lrange(key, start, start + 20)
+          Doozque.redis.lrange(key, start, start + 20)
         when 'set'
-          Resque.redis.smembers(key)[start..(start + 20)]
+          Doozque.redis.smembers(key)[start..(start + 20)]
         when 'string'
-          [Resque.redis.get(key)]
+          [Doozque.redis.get(key)]
         when 'zset'
-          Resque.redis.zrange(key, start, start + 20)
+          Doozque.redis.zrange(key, start, start + 20)
         end
       end
 
@@ -88,7 +88,7 @@ module Resque
       def worker_hosts!
         hosts = Hash.new { [] }
 
-        Resque.workers.each do |worker|
+        Doozque.workers.each do |worker|
           host, _ = worker.to_s.split(':')
           hosts[host] += [worker.to_s]
         end
@@ -120,9 +120,9 @@ module Resque
 
     def show(page, layout = true)
       begin
-        erb page.to_sym, {:layout => layout}, :resque => Resque
+        erb page.to_sym, {:layout => layout}, :doozque => Doozque
       rescue Errno::ECONNREFUSED
-        erb :error, {:layout => false}, :error => "Can't connect to Redis! (#{Resque.redis_id})"
+        erb :error, {:layout => false}, :error => "Can't connect to Redis! (#{Doozque.redis_id})"
       end
     end
     
@@ -158,39 +158,39 @@ module Resque
     end
 
     post "/queues/:id/remove" do
-      Resque.remove_queue(params[:id])
+      Doozque.remove_queue(params[:id])
       redirect u('queues')
     end
 
     get "/failed" do
-      if Resque::Failure.url
-        redirect Resque::Failure.url
+      if Doozque::Failure.url
+        redirect Doozque::Failure.url
       else
         show :failed
       end
     end
 
     post "/failed/clear" do
-      Resque::Failure.clear
+      Doozque::Failure.clear
       redirect u('failed')
     end
 
     get "/failed/requeue/:index" do
-      Resque::Failure.requeue(params[:index])
+      Doozque::Failure.requeue(params[:index])
       if request.xhr?
-        return Resque::Failure.all(params[:index])['retried_at']
+        return Doozque::Failure.all(params[:index])['retried_at']
       else
         redirect u('failed')
       end
     end
 
     get "/failed/remove/:index" do
-      Resque::Failure.remove(params[:index])
+      Doozque::Failure.remove(params[:index])
       redirect u('failed')
     end
 
     get "/stats" do
-      redirect url_path("/stats/resque")
+      redirect url_path("/stats/doozque")
     end
 
     get "/stats/:id" do
@@ -202,25 +202,25 @@ module Resque
     end
 
     get "/stats.txt" do
-      info = Resque.info
+      info = Doozque.info
 
       stats = []
-      stats << "resque.pending=#{info[:pending]}"
-      stats << "resque.processed+=#{info[:processed]}"
-      stats << "resque.failed+=#{info[:failed]}"
-      stats << "resque.workers=#{info[:workers]}"
-      stats << "resque.working=#{info[:working]}"
+      stats << "doozque.pending=#{info[:pending]}"
+      stats << "doozque.processed+=#{info[:processed]}"
+      stats << "doozque.failed+=#{info[:failed]}"
+      stats << "doozque.workers=#{info[:workers]}"
+      stats << "doozque.working=#{info[:working]}"
 
-      Resque.queues.each do |queue|
-        stats << "queues.#{queue}=#{Resque.size(queue)}"
+      Doozque.queues.each do |queue|
+        stats << "queues.#{queue}=#{Doozque.size(queue)}"
       end
 
       content_type 'text/html'
       stats.join "\n"
     end
 
-    def resque
-      Resque
+    def doozque
+      Doozque
     end
 
     def self.tabs

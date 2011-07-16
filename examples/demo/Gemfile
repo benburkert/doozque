@@ -1,0 +1,8 @@
+source :rubygems
+
+gem 'doozque', :path => '../..'
+gem 'fraggle-block', :path => '~/code/fraggle-block'
+gem 'yajl-ruby'
+gem 'rake'
+
+gem 'ruby-debug'

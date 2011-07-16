@@ -1,19 +1,19 @@
 require 'fraggle/block'
 
-require 'resque/version'
+require 'doozque/version'
 
-require 'resque/errors'
+require 'doozque/errors'
 
-require 'resque/failure'
-require 'resque/failure/base'
+require 'doozque/failure'
+require 'doozque/failure/base'
 
-require 'resque/helpers'
-require 'resque/stat'
-require 'resque/job'
-require 'resque/worker'
-require 'resque/plugin'
+require 'doozque/helpers'
+require 'doozque/stat'
+require 'doozque/job'
+require 'doozque/worker'
+require 'doozque/plugin'
 
-module Resque
+module Doozque
   include Helpers
   extend self
 
@@ -76,9 +76,9 @@ module Resque
     "Doozer Client connected to #{doozer_id}"
   end
 
-  # If 'inline' is true Resque will call #perform method inline
-  # without queuing it into Redis and without any Resque callbacks.
-  # The 'inline' is false Resque jobs will be put in queue regularly.
+  # If 'inline' is true Doozque will call #perform method inline
+  # without queuing it into Redis and without any Doozque callbacks.
+  # The 'inline' is false Doozque jobs will be put in queue regularly.
   def inline?
     @inline
   end
@@ -95,7 +95,7 @@ module Resque
   # Pushes a job onto a queue. Queue name should be a string and the
   # item should be any JSON-able Ruby object.
   #
-  # Resque works generally expect the `item` to be a hash with the following
+  # Doozque works generally expect the `item` to be a hash with the following
   # keys:
   #
   #   class - The String name of the job to run.
@@ -104,7 +104,7 @@ module Resque
   #
   # Example
   #
-  #   Resque.push('archive', :class => 'Archive', :args => [ 35, 'tar' ])
+  #   Doozque.push('archive', :class => 'Archive', :args => [ 35, 'tar' ])
   #
   # Returns nothing
   def push(queue, item)
@@ -158,7 +158,7 @@ module Resque
   # start is the item to begin, count is how many items to return.
   #
   # To get the 3rd page of a 30 item, paginatied list one would use:
-  #   Resque.peek('my_list', 59, 30)
+  #   Doozque.peek('my_list', 59, 30)
   def peek(queue, start = 0, count = 1)
     list_range("queue:#{queue}", start, count)
   end
@@ -175,7 +175,7 @@ module Resque
     end
   end
 
-  # Returns an array of all known Resque queues as strings.
+  # Returns an array of all known Doozque queues as strings.
   def queues
     queue_response = fraggle.get('/queues')
 
@@ -228,7 +228,7 @@ module Resque
   # If either of those conditions are met, it will use the value obtained
   # from performing one of the above operations to determine the queue.
   #
-  # If no queue can be inferred this method will raise a `Resque::NoQueueError`
+  # If no queue can be inferred this method will raise a `Doozque::NoQueueError`
   #
   # This method is considered part of the `stable` API.
   def enqueue(klass, *args)
@@ -255,10 +255,10 @@ module Resque
   # If either of those conditions are met, it will use the value obtained
   # from performing one of the above operations to determine the queue.
   #
-  # If no queue can be inferred this method will raise a `Resque::NoQueueError`
+  # If no queue can be inferred this method will raise a `Doozque::NoQueueError`
   #
   # If no args are given, this method will dequeue *all* jobs matching
-  # the provided class. See `Resque::Job.destroy` for more
+  # the provided class. See `Doozque::Job.destroy` for more
   # information.
   #
   # Returns the number of jobs destroyed.
@@ -266,10 +266,10 @@ module Resque
   # Example:
   #
   #   # Removes all jobs of class `UpdateNetworkGraph`
-  #   Resque.dequeue(GitHub::Jobs::UpdateNetworkGraph)
+  #   Doozque.dequeue(GitHub::Jobs::UpdateNetworkGraph)
   #
   #   # Removes all jobs of class `UpdateNetworkGraph` with matching args.
-  #   Resque.dequeue(GitHub::Jobs::UpdateNetworkGraph, 'repo:135325')
+  #   Doozque.dequeue(GitHub::Jobs::UpdateNetworkGraph, 'repo:135325')
   #
   # This method is considered part of the `stable` API.
   def dequeue(klass, *args)
@@ -283,7 +283,7 @@ module Resque
       (klass.respond_to?(:queue) and klass.queue)
   end
 
-  # This method will return a `Resque::Job` object or a non-true value
+  # This method will return a `Doozque::Job` object or a non-true value
   # depending on whether a job can be obtained. You should pass it the
   # precise name of a queue: case matters.
   #
@@ -292,11 +292,11 @@ module Resque
     Job.reserve(queue)
   end
 
-  # Validates if the given klass could be a valid Resque job
+  # Validates if the given klass could be a valid Doozque job
   #
-  # If no queue can be inferred this method will raise a `Resque::NoQueueError`
+  # If no queue can be inferred this method will raise a `Doozque::NoQueueError`
   #
-  # If given klass is nil this method will raise a `Resque::NoClassError`
+  # If given klass is nil this method will raise a `Doozque::NoClassError`
   def validate(klass, queue = nil)
     queue ||= queue_from_class(klass)
 
@@ -327,7 +327,7 @@ module Resque
   # A shortcut to unregister_worker
   # useful for command line tool
   def remove_worker(worker_id)
-    worker = Resque::Worker.find(worker_id)
+    worker = Doozque::Worker.find(worker_id)
     worker.unregister_worker
   end
 
@@ -349,7 +349,7 @@ module Resque
     }
   end
 
-  # Returns an array of all known Resque keys in Redis. Redis' KEYS operation
+  # Returns an array of all known Doozque keys in Redis. Redis' KEYS operation
   # is O(N) for the keyspace, so be careful - this can be slow for big databases.
   def keys
     fraggle.walk_all('/**').map {|r| r.path }

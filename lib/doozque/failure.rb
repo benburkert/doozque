@@ -1,9 +1,9 @@
-module Resque
+module Doozque
   # The Failure module provides an interface for working with different
   # failure backends.
   #
   # You can use it to query the failure backend without knowing which specific
-  # backend is being used. For instance, the Resque web app uses it to display
+  # backend is being used. For instance, the Doozque web app uses it to display
   # stats and other information.
   module Failure
     # Creates a new failure, which is delegated to the appropriate backend.
@@ -19,20 +19,20 @@ module Resque
 
     #
     # Sets the current backend. Expects a class descendent of
-    # `Resque::Failure::Base`.
+    # `Doozque::Failure::Base`.
     #
     # Example use:
-    #   require 'resque/failure/hoptoad'
-    #   Resque::Failure.backend = Resque::Failure::Hoptoad
+    #   require 'doozque/failure/hoptoad'
+    #   Doozque::Failure.backend = Doozque::Failure::Hoptoad
     def self.backend=(backend)
       @backend = backend
     end
 
     # Returns the current backend class. If none has been set, falls
-    # back to `Resque::Failure::Redis`
+    # back to `Doozque::Failure::Redis`
     def self.backend
       return @backend if @backend
-      require 'resque/failure/redis'
+      require 'doozque/failure/redis'
       @backend = Failure::Redis
     end
 

@@ -1,6 +1,6 @@
 <% @subtabs = worker_hosts.keys.sort unless worker_hosts.size == 1 %>
 
-<% if params[:id] && worker = Resque::Worker.find(params[:id]) %>
+<% if params[:id] && worker = Doozque::Worker.find(params[:id]) %>
 
   <h1>Worker <%= worker %></h1>
   <table class='workers'>
@@ -43,9 +43,9 @@
 <% elsif worker_hosts.size == 1 || params[:id] %>
 
   <% if worker_hosts.size == 1 || params[:id] == 'all' %>
-    <% workers = Resque.workers %>
+    <% workers = Doozque.workers %>
   <% else %>
-    <% workers = worker_hosts[params[:id]].map { |id| Resque::Worker.find(id) } %>
+    <% workers = worker_hosts[params[:id]].map { |id| Doozque::Worker.find(id) } %>
   <% end %>
 
   <h1 class='wi'><%= workers.size %> Workers</h1>
@@ -101,7 +101,7 @@
     <% end %>
     <tr class="failed">
       <td class='queue failed'><a class="queue" href="<%= u "workers/all" %>">all workers</a></td>
-      <td class='size'><%= Resque.workers.size %></td>
+      <td class='size'><%= Doozque.workers.size %></td>
     </tr>
   </table>
 

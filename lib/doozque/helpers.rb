@@ -6,18 +6,18 @@ if MultiJson.engine.to_s == 'MultiJson::Engines::OkJson'
   raise "Please install the yajl-ruby or json gem"
 end
 
-module Resque
-  # Methods used by various classes in Resque.
+module Doozque
+  # Methods used by various classes in Doozque.
   module Helpers
     class DecodeException < StandardError; end
 
     # Direct access to the Redis instance.
     def redis
-      Resque.redis
+      Doozque.redis
     end
 
     def fraggle
-      Resque.fraggle
+      Doozque.fraggle
     end
 
     # Given a Ruby object, returns a string suitable for storage in a

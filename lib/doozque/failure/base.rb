@@ -1,4 +1,4 @@
-module Resque
+module Doozque
   module Failure
     # All Failure classes are expected to subclass Base.
     #

@@ -1,4 +1,4 @@
-require 'resque'
+require 'doozque'
 
 module Demo
   module Job

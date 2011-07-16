@@ -1,5 +1,5 @@
 $LOAD_PATH.unshift File.dirname(__FILE__) + '/../../lib'
-require 'resque/tasks'
+require 'doozque/tasks'
 require 'job'
 
 desc "Start the demo using `rackup`"

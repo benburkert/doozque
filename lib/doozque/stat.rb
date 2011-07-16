@@ -1,4 +1,4 @@
-module Resque
+module Doozque
   # The stat subsystem. Used to keep track of integer counts.
   #
   #   Get a stat:  Stat[name]

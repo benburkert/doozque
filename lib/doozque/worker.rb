@@ -1,5 +1,5 @@
-module Resque
-  # A Resque Worker processes jobs. On platforms that support fork(2),
+module Doozque
+  # A Doozque Worker processes jobs. On platforms that support fork(2),
   # the worker will fork off a child to process each job. This ensures
   # a clean slate when beginning the next job and cuts down on gradual
   # memory growth as well as low level failures.
@@ -7,8 +7,8 @@ module Resque
   # It also ensures workers are always listening to signals from you,
   # their master, and can react accordingly.
   class Worker
-    include Resque::Helpers
-    extend Resque::Helpers
+    include Doozque::Helpers
+    extend Doozque::Helpers
 
     # Whether the worker should log basic info to STDOUT
     attr_accessor :verbose
@@ -114,7 +114,7 @@ module Resque
     # has completed processing. Useful for testing.
     def work(interval = 5.0, &block)
       interval = Float(interval)
-      $0 = "resque: Starting"
+      $0 = "doozque: Starting"
       startup
 
       loop do
@@ -185,7 +185,7 @@ module Resque
     def reserve
       queues.each do |queue|
         log! "Checking #{queue}"
-        if job = Resque::Job.reserve(queue)
+        if job = Doozque::Job.reserve(queue)
           log! "Found job on #{queue}"
           return job
         end
@@ -231,7 +231,7 @@ module Resque
       run_hook :before_first_fork
       register_worker
 
-      # Fix buffering so we can `rake resque:work > resque.log` and
+      # Fix buffering so we can `rake doozque:work > doozque.log` and
       # get output from the child in there.
       $stdout.sync = true
     end
@@ -323,7 +323,7 @@ module Resque
     #
     # This is a form of garbage collection. If a server is killed by a
     # hard shutdown, power failure, or something else beyond our
-    # control, the Resque workers will not die gracefully and therefore
+    # control, the Doozque workers will not die gracefully and therefore
     # will leave stale state information in Redis.
     #
     # By checking the current Redis state against the actual
@@ -353,7 +353,7 @@ module Resque
 
     # Runs a named hook, passing along any arguments.
     def run_hook(name, *args)
-      return unless hook = Resque.send(name)
+      return unless hook = Doozque.send(name)
       msg = "Running #{name} hook"
       msg << " with #{args.inspect}" if args.any?
       log msg
@@ -482,16 +482,16 @@ module Resque
     # Returns an array of string pids of all the other workers on this
     # machine. Useful when pruning dead workers on startup.
     def worker_pids
-      `ps -A -o pid,command | grep [r]esque | grep -v "resque-web"`.split("\n").map do |line|
+      `ps -A -o pid,command | grep [r]esque | grep -v "doozque-web"`.split("\n").map do |line|
         line.split(' ')[0]
       end
     end
 
     # Given a string, sets the procline ($0) and logs.
     # Procline is always in the format of:
-    #   resque-VERSION: STRING
+    #   doozque-VERSION: STRING
     def procline(string)
-      $0 = "resque-#{Resque::Version}: #{string}"
+      $0 = "doozque-#{Doozque::Version}: #{string}"
       log! $0
     end
 

@@ -1,5 +1,5 @@
 <%start = params[:start].to_i %>
-<%failed = Resque::Failure.all(start, 20)%>
+<%failed = Doozque::Failure.all(start, 20)%>
 <% index = 0 %>
 <% date_format = "%Y/%m/%d %T %z" %>
 
@@ -10,7 +10,7 @@
 </form>
 <%end%>
 
-<p class='sub'>Showing <%=start%> to <%= start + 20 %> of <b><%= size = Resque::Failure.count %></b> jobs</p>
+<p class='sub'>Showing <%=start%> to <%= start + 20 %> of <b><%= size = Doozque::Failure.count %></b> jobs</p>
 
 <ul class='failed'>
   <%for job in failed%>

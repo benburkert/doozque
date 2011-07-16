@@ -1,4 +1,4 @@
-<% @subtabs = resque.queues unless partial? || params[:id].nil? %>
+<% @subtabs = doozque.queues unless partial? || params[:id].nil? %>
 
 <% if queue = params[:id] %>
 
@@ -6,13 +6,13 @@
   <form method="POST" action="<%=u "/queues/#{queue}/remove" %>" class='remove-queue'>
     <input type='submit' name='' value='Remove Queue' onclick='return confirm("Are you absolutely sure? This cannot be undone.");' />
   </form>
-  <p class='sub'>Showing <%= start = params[:start].to_i %> to <%= start + 20 %> of <b><%=size = resque.size(queue)%></b> jobs</p>
+  <p class='sub'>Showing <%= start = params[:start].to_i %> to <%= start + 20 %> of <b><%=size = doozque.size(queue)%></b> jobs</p>
   <table class='jobs'>
     <tr>
       <th>Class</th>
       <th>Args</th>
     </tr>
-    <% for job in (jobs = resque.peek(queue, start, 20)) %>
+    <% for job in (jobs = doozque.peek(queue, start, 20)) %>
     <tr>
       <td class='class'><%= job['class'] %></td>
       <td class='args'><%=h job['args'].inspect %></td>
@@ -34,15 +34,15 @@
       <th>Name</th>
       <th>Jobs</th>
     </tr>
-    <% for queue in resque.queues.sort_by { |q| q.to_s } %>
+    <% for queue in doozque.queues.sort_by { |q| q.to_s } %>
     <tr>
       <td class='queue'><a class="queue" href="<%= u "queues/#{queue}" %>"><%= queue %></a></td>
-      <td class='size'><%= resque.size queue %></td>
+      <td class='size'><%= doozque.size queue %></td>
     </tr>
     <% end %>
-    <tr class="<%= Resque::Failure.count.zero? ? "failed" : "failure" %>">
+    <tr class="<%= Doozque::Failure.count.zero? ? "failed" : "failure" %>">
       <td class='queue failed'><a class="queue" href="<%= u :failed %>">failed</a></td>
-      <td class='size'><%= Resque::Failure.count %></td>
+      <td class='size'><%= Doozque::Failure.count %></td>
     </tr>
   </table>
 

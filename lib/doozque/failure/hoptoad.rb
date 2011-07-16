@@ -4,18 +4,18 @@ rescue LoadError
   raise "Can't find 'hoptoad_notifier' gem. Please add it to your Gemfile or install it."
 end
 
-module Resque
+module Doozque
   module Failure
     # A Failure backend that sends exceptions raised by jobs to Hoptoad.
     #
     # To use it, put this code in an initializer, Rake task, or wherever:
     #
-    #   require 'resque/failure/hoptoad'
+    #   require 'doozque/failure/hoptoad'
     #
-    #   Resque::Failure::Multiple.classes = [Resque::Failure::Redis, Resque::Failure::Hoptoad]
-    #   Resque::Failure.backend = Resque::Failure::Multiple
+    #   Doozque::Failure::Multiple.classes = [Doozque::Failure::Redis, Doozque::Failure::Hoptoad]
+    #   Doozque::Failure.backend = Doozque::Failure::Multiple
     #
-    # Once you've configured resque to use the Hoptoad failure backend,
+    # Once you've configured doozque to use the Hoptoad failure backend,
     # you'll want to setup an initializer to configure the Hoptoad.
     #
     # HoptoadNotifier.configure do |config|
@@ -24,13 +24,13 @@ module Resque
     # For more information see https://github.com/thoughtbot/hoptoad_notifier
     class Hoptoad < Base
       def self.configure(&block)
-        Resque::Failure.backend = self
+        Doozque::Failure.backend = self
         HoptoadNotifier.configure(&block)
       end
 
       def self.count
         # We can't get the total # of errors from Hoptoad so we fake it
-        # by asking Resque how many errors it has seen.
+        # by asking Doozque how many errors it has seen.
         Stat[:failed]
       end
 

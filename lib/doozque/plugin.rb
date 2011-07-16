@@ -1,4 +1,4 @@
-module Resque
+module Doozque
   module Plugin
     extend self
 
@@ -6,7 +6,7 @@ module Resque
 
     # Ensure that your plugin conforms to good hook naming conventions.
     #
-    #   Resque::Plugin.lint(MyResquePlugin)
+    #   Doozque::Plugin.lint(MyDoozquePlugin)
     def lint(plugin)
       hooks = before_hooks(plugin) + around_hooks(plugin) + after_hooks(plugin)
 

@@ -1,4 +1,4 @@
-module Resque
+module Doozque
   module Failure
     # A Failure backend that uses multiple backends
     # delegates all queries to the first backend
@@ -10,7 +10,7 @@ module Resque
 
       def self.configure
         yield self
-        Resque::Failure.backend = self
+        Doozque::Failure.backend = self
       end
 
       def initialize(*args)

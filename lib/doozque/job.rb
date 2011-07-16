@@ -1,5 +1,5 @@
-module Resque
-  # A Resque::Job represents a unit of work. Each job lives on a
+module Doozque
+  # A Doozque::Job represents a unit of work. Each job lives on a
   # single queue and has an associated payload object. The payload
   # is a hash with two attributes: `class` and `args`. The `class` is
   # the name of the Ruby class which should be used to run the
@@ -8,14 +8,14 @@ module Resque
   #
   # You can manually run a job using this code:
   #
-  #   job = Resque::Job.reserve(:high)
-  #   klass = Resque::Job.constantize(job.payload['class'])
+  #   job = Doozque::Job.reserve(:high)
+  #   klass = Doozque::Job.constantize(job.payload['class'])
   #   klass.perform(*job.payload['args'])
   class Job
     include Helpers
     extend Helpers
 
-    # Raise Resque::Job::DontPerform from a before_perform hook to
+    # Raise Doozque::Job::DontPerform from a before_perform hook to
     # abort the job.
     DontPerform = Class.new(StandardError)
 
@@ -40,12 +40,12 @@ module Resque
     #
     # Raises an exception if no queue or class is given.
     def self.create(queue, klass, *args)
-      Resque.validate(klass, queue)
+      Doozque.validate(klass, queue)
 
-      if Resque.inline?
+      if Doozque.inline?
         constantize(klass).perform(*decode(encode(args)))
       else
-        Resque.push(queue, :class => klass.to_s, :args => args)
+        Doozque.push(queue, :class => klass.to_s, :args => args)
       end
     end
 
@@ -64,11 +64,11 @@ module Resque
     #
     # The following call will remove both:
     #
-    #   Resque::Job.destroy(queue, 'UpdateGraph')
+    #   Doozque::Job.destroy(queue, 'UpdateGraph')
     #
     # Whereas specifying args will only remove the 2nd job:
     #
-    #   Resque::Job.destroy(queue, 'UpdateGraph', 'mojombo')
+    #   Doozque::Job.destroy(queue, 'UpdateGraph', 'mojombo')
     #
     # This method can be potentially very slow and memory intensive,
     # depending on the size of your queue, as it loads all jobs into
@@ -91,10 +91,10 @@ module Resque
       destroyed
     end
 
-    # Given a string queue name, returns an instance of Resque::Job
+    # Given a string queue name, returns an instance of Doozque::Job
     # if any jobs are available. If not, returns nil.
     def self.reserve(queue)
-      return unless payload = Resque.pop(queue)
+      return unless payload = Doozque.pop(queue)
       new(queue, payload)
     end
 
@@ -113,7 +113,7 @@ module Resque
 
       begin
         # Execute before_perform hook. Abort the job gracefully if
-        # Resque::DontPerform is raised.
+        # Doozque::DontPerform is raised.
         begin
           before_hooks.each do |hook|
             job.send(hook, *job_args)

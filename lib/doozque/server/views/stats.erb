@@ -1,14 +1,14 @@
-<% @subtabs = %w( resque redis keys ) %>
+<% @subtabs = %w( doozque redis keys ) %>
 
 <% if params[:key] %>
 
-<%= partial resque.redis.type(params[:key]).eql?("string") ? :key_string : :key_sets %>
+<%= partial doozque.redis.type(params[:key]).eql?("string") ? :key_string : :key_sets %>
 
-<% elsif params[:id] == "resque" %>
+<% elsif params[:id] == "doozque" %>
 
-  <h1><%= resque %></h1>
+  <h1><%= doozque %></h1>
   <table class='stats'>
-  <% for key, value in resque.info.to_a.sort_by { |i| i[0].to_s } %>
+  <% for key, value in doozque.info.to_a.sort_by { |i| i[0].to_s } %>
     <tr>
       <th>
         <%= key %>
@@ -22,9 +22,9 @@
 
 <% elsif params[:id] == 'redis' %>
 
-  <h1><%= resque.redis_id %></h1>
+  <h1><%= doozque.redis_id %></h1>
   <table class='stats'>
-  <% for key, value in resque.redis.info.to_a.sort_by { |i| i[0].to_s } %>
+  <% for key, value in doozque.redis.info.to_a.sort_by { |i| i[0].to_s } %>
     <tr>
       <th>
         <%= key %>
@@ -38,20 +38,20 @@
 
 <% elsif params[:id] == 'keys' %>
 
-  <h1>Keys owned by <%= resque %></h1>
-  <p class='sub'>(All keys are actually prefixed with "<%= Resque.redis.namespace %>:")</p>
+  <h1>Keys owned by <%= doozque %></h1>
+  <p class='sub'>(All keys are actually prefixed with "<%= Doozque.redis.namespace %>:")</p>
   <table class='stats'>
     <tr>
       <th>key</th>
       <th>type</th>
       <th>size</th>
     </tr>
-  <% for key in resque.keys.sort %>
+  <% for key in doozque.keys.sort %>
     <tr>
       <th>
         <a href="<%=u "/stats/keys/#{key}" %>"><%= key %></a>
       </th>
-      <td><%= resque.redis.type key %></td>
+      <td><%= doozque.redis.type key %></td>
       <td><%= redis_get_size key %></td>
     </tr>
   <% end %>
