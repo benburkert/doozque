@@ -27,9 +27,9 @@ module Resque
     def incr(stat, by = 1)
       response = fraggle.get("/stat/#{stat}")
       if response.value.empty? && response.rev == 0
-        fraggle.set("/stats/#{stat}", by.to_s)
+        fraggle.set("/stat/#{stat}", by.to_s)
       else
-        retry unless fraggle.set("/stats/#{stat}", (response.value.to_i + by).to_s, response.rev)
+        fraggle.set("/stat/#{stat}", (response.value.to_i + by).to_s, response.rev)
       end
     end
 
@@ -44,8 +44,11 @@ module Resque
     # decremented by that amount.
     def decr(stat, by = 1)
       response = fraggle.get("/stat/#{stat}")
-      value = (response.nil? || response.value.empty?) ? 0 : value.to_i
-      retry unless fraggle.set("/stats/#{stat}", value - by, response.rev)
+      if response.value.empty? && response.rev == 0
+        fraggle.set("/stat/#{stat}", by.to_s)
+      else
+        fraggle.set("/stat/#{stat}", (response.value.to_i - by).to_s, response.rev)
+      end
     end
 
     # Decrements a stat by one.

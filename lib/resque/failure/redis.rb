@@ -18,7 +18,8 @@ module Resque
       end
 
       def self.count
-        Resque.redis.llen(:failed).to_i
+        raw = Resque.fraggle.get('/stat/failed').value
+        raw.empty? ? 0 : raw.to_i
       end
 
       def self.all(start = 0, count = 1)
@@ -26,7 +27,7 @@ module Resque
       end
 
       def self.clear
-        Resque.redis.del(:failed)
+        Resque.fraggle.del('/stat/failed')
       end
 
       def self.requeue(index)

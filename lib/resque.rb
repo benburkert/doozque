@@ -68,6 +68,10 @@ module Resque
     end
   end
 
+  def doozer_id
+    fraggle.to_s
+  end
+
   # The `before_first_fork` hook will be run in the **parent** process
   # only once, before forking to run the first job. Be careful- any
   # changes you make will be permanent for the lifespan of the
@@ -116,7 +120,7 @@ module Resque
   end
 
   def to_s
-    "Resque Client connected to #{redis_id}"
+    "Doozer Client connected to #{doozer_id}"
   end
 
   # If 'inline' is true Resque will call #perform method inline
@@ -151,6 +155,7 @@ module Resque
   #
   # Returns nothing
   def push(queue, item)
+    watch_queue(queue)
     fraggle.set("/queue/#{queue}/#{$$}.#{Time.now.to_f}/job", encode(item))
   end
 
@@ -181,14 +186,16 @@ module Resque
 
     # lock doesn't exist, so race for it. If set returns nil, we lost.
     if lock_response.value.empty? && fraggle.set(lock_path, Time.now.to_s, lock_response.rev)
-      response.value
+      fraggle.del(response.path)
+      fraggle.del(lock_path)
+      decode(response.value)
     end
   end
 
   # Returns an integer representing the size of a queue.
   # Queue name should be a string.
   def size(queue)
-    redis.llen("queue:#{queue}").to_i
+    fraggle.walk_all("/queue/#{queue}/*/job").size
   end
 
   # Returns an array of items currently queued. Queue name should be
@@ -217,21 +224,42 @@ module Resque
 
   # Returns an array of all known Resque queues as strings.
   def queues
-    Array(redis.smembers(:queues))
+    queue_response = fraggle.get('/queues')
+
+    if queue_response.value.empty?
+      []
+    else
+      decode(queue_response.value)
+    end
   end
 
   # Given a queue name, completely deletes the queue.
   def remove_queue(queue)
-    redis.srem(:queues, queue.to_s)
-    redis.del("queue:#{queue}")
+    queue_response = fraggle.get('/queues')
+    unless queue_response.nil?
+      queues = decode(queue_response.value)
+      queues -= [queue]
+
+      fraggle.set('/queues', encode(queues), queue_response.rev)
+    end
+
+    fraggle.del("/queue/#{queue}")
   end
 
   # Used internally to keep track of which queues we've created.
   # Don't call this directly.
   def watch_queue(queue)
-    redis.sadd(:queues, queue.to_s)
-  end
+    queue_response = fraggle.get('/queues')
 
+    if queue_response.value.empty?
+      queues = [queue]
+    else
+      queues = decode(queue_response.value)
+      queues << queue unless queues.include?(queue.to_s)
+    end
+
+    fraggle.set('/queues', encode(queues), queue_response.rev)
+  end
 
   #
   # job shortcuts
@@ -363,7 +391,7 @@ module Resque
       :workers   => workers.size.to_i,
       :working   => working.size,
       :failed    => Stat[:failed],
-      :servers   => [redis_id],
+      :servers   => [doozer_id],
       :environment  => ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
     }
   end

@@ -135,7 +135,7 @@ module Resque
             exit! unless @cant_fork
           end
 
-          done_working(job)
+          done_working
           @child = nil
         else
           break if interval.zero?
@@ -157,7 +157,7 @@ module Resque
       working_on job
       perform(job, &block)
     ensure
-      done_working(job)
+      done_working
     end
 
     # Processes a given job in the child.
